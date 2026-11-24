@@ -7,6 +7,11 @@ observable behavior and compatibility, not every internal refactor.
 
 ### Added
 
+- Harness Studio's observation window gains a Yesterday preset, resolved as the
+  reader's previous local calendar day. Day ends are now derived from the next
+  local midnight, so the 23- and 25-hour days at DST transitions no longer
+  include an hour of the next day or drop the last hour.
+
 - DeepSeek Harness now ships a host shell bundle entry so
   `dsh plugin --profile <name> add @qoder-ai/better-harness` registers skill
   discovery and the explicit-only policy automatically, replacing the manual
