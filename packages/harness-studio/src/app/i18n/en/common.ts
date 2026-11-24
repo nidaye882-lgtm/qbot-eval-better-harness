@@ -205,6 +205,7 @@ export const common = {
     aria: "Observation window",
     preset: {
       today: "Today",
+      yesterday: "Yesterday",
       last7: "Last 7 days",
       last30: "Last 30 days",
       all: "All time",
