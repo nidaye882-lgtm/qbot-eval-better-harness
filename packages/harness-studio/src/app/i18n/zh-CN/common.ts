@@ -207,6 +207,7 @@ export const common: typeof enCommon = {
     aria: "观察时间窗",
     preset: {
       today: "今天",
+      yesterday: "昨天",
       last7: "最近 7 天",
       last30: "最近 30 天",
       all: "全部时间",
