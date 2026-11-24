@@ -74,6 +74,48 @@ describe("studio date range", () => {
     expect(resolveDateRange({ preset: "all" }, NOW)).toEqual({ preset: "all" });
   });
 
+  it("resolves yesterday to the local day before now, across month and year ends", () => {
+    expect(resolveDateRange({ preset: "yesterday" }, NOW)).toEqual({
+      preset: "yesterday", from: "2026-09-07", to: "2026-09-07",
+    });
+    expect(resolveDateRange({ preset: "yesterday" }, new Date(2026, 0, 1, 0, 30)))
+      .toEqual({ preset: "yesterday", from: "2025-12-31", to: "2025-12-31" });
+    expect(resolveDateRange({ preset: "yesterday" }, new Date(2026, 2, 1, 9)))
+      .toEqual({ preset: "yesterday", from: "2026-02-28", to: "2026-02-28" });
+    expect(resolveDateRange({ preset: "yesterday" }, new Date(2028, 2, 1, 9)))
+      .toEqual({ preset: "yesterday", from: "2028-02-29", to: "2028-02-29" });
+  });
+
+  it("treats yesterday as one local day, from midnight to its last instant", () => {
+    const bounds = dateRangeBounds({ preset: "yesterday" }, NOW);
+    expect(bounds.fromMs).toBe(new Date(2026, 8, 7, 0, 0, 0, 0).getTime());
+    expect(bounds.toMs).toBe(new Date(2026, 8, 8, 0, 0, 0, 0).getTime() - 1);
+    const yesterday = { preset: "yesterday" } as const;
+    expect(withinDateRange(new Date(2026, 8, 7, 0, 0, 0, 0).toISOString(), yesterday, NOW)).toBe(true);
+    expect(withinDateRange(new Date(2026, 8, 7, 23, 59, 59, 999).toISOString(), yesterday, NOW)).toBe(true);
+    expect(withinDateRange(new Date(2026, 8, 6, 23, 59, 59, 999).toISOString(), yesterday, NOW)).toBe(false);
+    expect(withinDateRange(new Date(2026, 8, 8, 0, 0, 0, 0).toISOString(), yesterday, NOW)).toBe(false);
+  });
+
+  it("ends every resolved day inside its own local day", () => {
+    const bounds = dateRangeBounds({ preset: "yesterday" }, NOW);
+    expect(localDayKey(new Date(bounds.fromMs!))).toBe("2026-09-07");
+    expect(localDayKey(new Date(bounds.toMs!))).toBe("2026-09-07");
+    expect(localDayKey(new Date(bounds.toMs! + 1))).toBe("2026-09-08");
+  });
+
+  // Narrowing from the default window is answered from rows already in hand;
+  // asking for yesterday after loading today is a question the server has not
+  // answered yet and has to re-scan.
+  it("knows yesterday is a narrower window than the loaded default", () => {
+    const yesterday = dateRangeBounds({ preset: "yesterday" }, NOW);
+    expect(windowCovers(dateRangeBounds({ preset: "last30" }, NOW), yesterday)).toBe(true);
+    expect(windowCovers(dateRangeBounds({ preset: "last7" }, NOW), yesterday)).toBe(true);
+    expect(windowCovers(dateRangeBounds({ preset: "today" }, NOW), yesterday)).toBe(false);
+    expect(windowMatches(dateRangeBounds({ preset: "last30" }, NOW), yesterday)).toBe(false);
+    expect(windowMatches(yesterday, dateRangeBounds({ preset: "yesterday" }, NOW))).toBe(true);
+  });
+
   it("keeps a half-filled custom range open at the end the reader left open", () => {
     expect(resolveDateRange({ preset: "custom", from: "2026-01-01" }, NOW))
       .toEqual({ preset: "custom", from: "2026-01-01" });
@@ -122,6 +164,16 @@ describe("studio date range", () => {
     ];
     const visible = artifactsInDateRange(artifacts, observations, { preset: "today" }, NOW);
     expect(visible.map((artifact) => artifact.id)).toEqual(["recent", "undated"]);
+  });
+
+  it("hides Artifacts observed today when the window is yesterday", () => {
+    const artifacts = [{ id: "yesterday" }, { id: "today" }, { id: "undated" }];
+    const observations = [
+      { artifactId: "yesterday", savedAt: new Date(2026, 8, 7, 12, 0, 0).toISOString() },
+      { artifactId: "today", savedAt: new Date(2026, 8, 8, 12, 0, 0).toISOString() },
+    ];
+    const visible = artifactsInDateRange(artifacts, observations, { preset: "yesterday" }, NOW);
+    expect(visible.map((artifact) => artifact.id)).toEqual(["yesterday", "undated"]);
   });
 
   it("reports a crossed custom range instead of silently returning nothing", () => {
