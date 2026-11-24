@@ -6,11 +6,11 @@
  * sidebar rather than re-picked on each page. Views read the resolved window
  * and filter; none of them owns a calendar of its own.
  *
- * Days are local-calendar days. A reader asking for "today" means the day their
- * clock shows, not a UTC window that starts mid-afternoon.
+ * Days are local-calendar days. A reader asking for "today" or "yesterday"
+ * means the day their clock shows, not a UTC window that starts mid-afternoon.
  */
 
-export type StudioDateRangePreset = "today" | "last7" | "last30" | "all" | "custom";
+export type StudioDateRangePreset = "today" | "yesterday" | "last7" | "last30" | "all" | "custom";
 
 export interface StudioDateRange {
   preset: StudioDateRangePreset;
@@ -23,6 +23,7 @@ export interface StudioDateRange {
 /** Presets offered in the sidebar, in the order they are shown. */
 export const STUDIO_DATE_RANGE_PRESETS: readonly StudioDateRangePreset[] = [
   "today",
+  "yesterday",
   "last7",
   "last30",
   "all",
@@ -50,17 +51,11 @@ export const STUDIO_DEFAULT_DATE_RANGE: StudioDateRange = { preset: "last30" };
 export function dateRangeBounds(range: StudioDateRange, now?: Date): { fromMs?: number; toMs?: number } {
   const window = resolveDateRange(range, now);
   if (window.preset === "all") return {};
-  const dayStart = (key: string): number | undefined => {
-    const [year, month, day] = key.split("-").map(Number);
-    if (year === undefined || month === undefined || day === undefined) return undefined;
-    const at = new Date(year, month - 1, day);
-    return Number.isNaN(at.getTime()) ? undefined : at.getTime();
-  };
-  const fromMs = window.from === undefined ? undefined : dayStart(window.from);
-  const toStart = window.to === undefined ? undefined : dayStart(window.to);
+  const fromMs = window.from === undefined ? undefined : localDayStartMs(window.from);
+  const toMs = window.to === undefined ? undefined : localDayEndMs(window.to);
   return {
     ...(fromMs === undefined ? {} : { fromMs }),
-    ...(toStart === undefined ? {} : { toMs: toStart + 86_400_000 - 1 }),
+    ...(toMs === undefined ? {} : { toMs }),
   };
 }
 
@@ -105,6 +100,36 @@ export function localDayKey(value: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+function localDayParts(key: string): [number, number, number] | undefined {
+  const [year, month, day] = key.split("-").map(Number);
+  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) return undefined;
+  const at = new Date(year, month - 1, day);
+  return Number.isNaN(at.getTime()) ? undefined : [year, month, day];
+}
+
+/** The first instant of a local calendar day. */
+function localDayStartMs(key: string): number | undefined {
+  const parts = localDayParts(key);
+  if (parts === undefined) return undefined;
+  const started = new Date(parts[0], parts[1] - 1, parts[2]).getTime();
+  return Number.isNaN(started) ? undefined : started;
+}
+
+/**
+ * The last instant of a local calendar day.
+ *
+ * A local day is 23 or 25 hours long when DST starts or ends, so adding a fixed
+ * 86_400_000 ms would either spill into the next day or stop an hour short.
+ * The next local midnight is the only stable end: step back one millisecond
+ * from it and the length of the day takes care of itself.
+ */
+function localDayEndMs(key: string): number | undefined {
+  const parts = localDayParts(key);
+  if (parts === undefined) return undefined;
+  const next = new Date(parts[0], parts[1] - 1, parts[2] + 1).getTime();
+  return Number.isNaN(next) ? undefined : next - 1;
+}
+
 function shiftDays(from: Date, days: number): Date {
   const shifted = new Date(from);
   shifted.setDate(shifted.getDate() + days);
@@ -122,6 +147,10 @@ export function resolveDateRange(range: StudioDateRange, now: Date = new Date())
   switch (range.preset) {
     case "today":
       return { preset: "today", from: today, to: today };
+    case "yesterday": {
+      const yesterday = localDayKey(shiftDays(now, -1));
+      return { preset: "yesterday", from: yesterday, to: yesterday };
+    }
     case "last7":
       return { preset: "last7", from: localDayKey(shiftDays(now, -6)), to: today };
     case "last30":
