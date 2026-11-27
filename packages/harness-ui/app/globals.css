@@ -10,15 +10,53 @@
   --primary: #171717;
   --primary-foreground: #ffffff;
   --accent: #f5f5f5;
+  --surface-raised: #ffffff;
   --chart: #2563eb;
   --chart-soft: #eff6ff;
   --chart-grid: #ededed;
   --success: #047857;
+  --success-surface: #ecfdf5;
+  --success-surface-border: #a7f3d0;
   --warning: #a16207;
+  --warning-surface: #fffbeb;
+  --warning-surface-border: #fde68a;
   --danger: #b91c1c;
+  --danger-surface: #fef2f2;
+  --danger-surface-border: #fecaca;
   --radius: 12px;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.035);
+  --raised-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
   color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --background: #0f0f12;
+  --foreground: #f2f2f5;
+  --card: #1a1a1f;
+  --card-muted: #151519;
+  --muted: #a3a3ad;
+  --muted-foreground: #c6c6cf;
+  --border: rgb(233 240 255 / 0.12);
+  --border-strong: rgb(233 240 255 / 0.26);
+  --primary: #f2f2f5;
+  --primary-foreground: #121216;
+  --accent: #26262c;
+  --surface-raised: #34343c;
+  --chart: #63a8ff;
+  --chart-soft: #1b3054;
+  --chart-grid: rgb(233 240 255 / 0.14);
+  --success: #4fdca4;
+  --success-surface: #10352a;
+  --success-surface-border: #1f5c46;
+  --warning: #f7c46a;
+  --warning-surface: #3b2a14;
+  --warning-surface-border: #6b4a1c;
+  --danger: #ff929a;
+  --danger-surface: #421c26;
+  --danger-surface-border: #6d2b36;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.45);
+  --raised-shadow: 0 1px 3px rgb(0 0 0 / 0.55);
+  color-scheme: dark;
 }
 
 * {
@@ -337,6 +375,21 @@ select:focus-visible {
   gap: 8px;
 }
 
+.theme-toggle {
+  flex: 0 0 auto;
+}
+
+.theme-toggle button {
+  align-items: center;
+  display: inline-flex;
+  gap: 5px;
+}
+
+.theme-toggle svg {
+  height: 13px;
+  width: 13px;
+}
+
 .segmented {
   background: var(--accent);
   border: 1px solid var(--border);
@@ -356,8 +409,8 @@ select:focus-visible {
 }
 
 .segmented button.active {
-  background: var(--card);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+  background: var(--surface-raised);
+  box-shadow: var(--raised-shadow);
   color: var(--foreground);
   font-weight: 600;
 }
@@ -370,6 +423,10 @@ select:focus-visible {
   cursor: pointer;
   min-width: 128px;
   padding: 8px 32px 8px 10px;
+}
+
+:root[data-theme="dark"] .range-select select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23a3a3ad' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 }
 
 .skill-select select {
@@ -895,6 +952,13 @@ select:focus-visible {
   min-width: 160px;
 }
 
+:root[data-theme="dark"] .project-select {
+  background-color: var(--card);
+  border-color: var(--border);
+  border-radius: 8px;
+  color: var(--foreground);
+}
+
 .page-window {
   color: var(--muted);
   font-size: 12px;
@@ -1215,14 +1279,14 @@ select:focus-visible {
 }
 
 .review-state[data-state="observed"] {
-  background: #ecfdf5;
-  border-color: #a7f3d0;
+  background: var(--success-surface);
+  border-color: var(--success-surface-border);
   color: var(--success);
 }
 
 .review-state[data-state="attention"] {
-  background: #fffbeb;
-  border-color: #fde68a;
+  background: var(--warning-surface);
+  border-color: var(--warning-surface-border);
   color: var(--warning);
 }
 
@@ -1407,22 +1471,22 @@ select:focus-visible {
 .evidence-status[data-status="passed"],
 .evidence-status[data-status="observed"],
 .evidence-status[data-status="succeeded"] {
-  background: #ecfdf5;
-  border-color: #a7f3d0;
+  background: var(--success-surface);
+  border-color: var(--success-surface-border);
   color: var(--success);
 }
 
 .evidence-status[data-status="unobserved"],
 .evidence-status[data-status="ambiguous"] {
-  background: #fffbeb;
-  border-color: #fde68a;
+  background: var(--warning-surface);
+  border-color: var(--warning-surface-border);
   color: var(--warning);
 }
 
 .evidence-status[data-status="failed"],
 .evidence-status[data-status="unresolved"] {
-  background: #fef2f2;
-  border-color: #fecaca;
+  background: var(--danger-surface);
+  border-color: var(--danger-surface-border);
   color: var(--danger);
 }
 
@@ -1710,6 +1774,7 @@ select:focus-visible {
   }
 
   .page-header-controls {
+    flex-wrap: wrap;
     justify-content: space-between;
     width: 100%;
   }

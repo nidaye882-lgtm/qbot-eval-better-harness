@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import type { ReactNode } from "react";
+
+import { themeBootstrapScript } from "@/lib/theme";
 
 import "./globals.css";
 
@@ -10,8 +13,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body>
+        <Script id="theme-bootstrap" strategy="beforeInteractive">
+          {themeBootstrapScript()}
+        </Script>
+        {children}
+      </body>
     </html>
   );
 }
