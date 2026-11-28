@@ -18,6 +18,7 @@ import {
 import { useMemo, useState, type ReactNode } from "react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
+import { AppearanceSwitch } from "@/components/appearance-switch";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import type { DashboardInput, DashboardProject, DashboardProjectSnapshot } from "@/lib/contracts";
 import { buildDashboardModel, type DashboardModel } from "@/lib/dashboard-model";
@@ -222,16 +223,19 @@ function ProjectState({
       <main className="dashboard">
         <header className="page-header">
           <h1>{selected.label}</h1>
-          {projects.length > 1 ? (
-            <select
-              aria-label="Project"
-              className="project-select"
-              value={selected.id}
-              onChange={(event) => onProjectChange(event.target.value)}
-            >
-              {projects.map((project) => <option key={project.id} value={project.id}>{project.label}</option>)}
-            </select>
-          ) : null}
+          <div className="page-header-controls">
+            {projects.length > 1 ? (
+              <select
+                aria-label="Project"
+                className="project-select"
+                value={selected.id}
+                onChange={(event) => onProjectChange(event.target.value)}
+              >
+                {projects.map((project) => <option key={project.id} value={project.id}>{project.label}</option>)}
+              </select>
+            ) : null}
+            <AppearanceSwitch />
+          </div>
         </header>
         <section className="card project-state" aria-live="polite">
           {status === "loading" ? (
@@ -409,6 +413,7 @@ function DashboardView({
                 {windowLabel}{model.window?.truncated ? " (truncated)" : ""}
               </span>
             ) : null}
+            <AppearanceSwitch />
           </div>
         </header>
 
